@@ -6,12 +6,20 @@ public class playerMovement : MonoBehaviour
 {
     public float speed;
     public float rotationSpeed;
+    public float jumpSpeed;
+    public float jumpButtonGracePeriod;
 
     private CharacterController characterController;
+    private float ySpeed;
+    private float orignalStepOffset;
+    private float? lastGroundTime;
+    private float? jumpButtonPressedTime;
+
 
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
+        orignalStepOffset = characterController.stepOffset;
     }
 
     void Update()
@@ -25,8 +33,37 @@ public class playerMovement : MonoBehaviour
         float magnitude = movementDirection.magnitude;
         magnitude = Mathf.Clamp01((float)magnitude);
         movementDirection.Normalize();
-        characterController.SimpleMove(movementDirection * magnitude);
+        Vector3 velocity = movementDirection * magnitude;
+        velocity.y = ySpeed;
+        characterController.Move(velocity * Time.deltaTime);
         //transform.Translate(movementDirection * magnitude * Time.deltaTime * speed, Space.World);
+
+        //jump Character
+        ySpeed += Physics.gravity.y * Time.deltaTime;
+        if (characterController.isGrounded)
+        {
+            lastGroundTime = Time.time;
+        }
+
+        if (Input.GetButtonDown("Jump"))
+        {
+            jumpButtonPressedTime = Time.time;
+        }
+        if (Time.time - lastGroundTime <= jumpButtonGracePeriod)
+        {
+            characterController.stepOffset = orignalStepOffset;
+            ySpeed = -0.5f;
+            if (Time.time - jumpButtonPressedTime <= jumpButtonGracePeriod)
+            {
+                ySpeed = jumpSpeed;
+                jumpButtonPressedTime = null;
+                lastGroundTime = null;
+            }
+        }
+        else
+        {
+            characterController.stepOffset = 0f;
+        }
         
         // move charactor face to the transform direction
         if(movementDirection != Vector3.zero)
