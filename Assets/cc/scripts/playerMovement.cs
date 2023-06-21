@@ -1,13 +1,20 @@
+using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class playerMovement : MonoBehaviour
 {
-    public float speed;
+    public float maxSpeed;
     public float rotationSpeed;
     public float jumpSpeed;
     public float jumpButtonGracePeriod;
+
+    [SerializeField]
+    private Transform cameraTransform;
+
+    [SerializeField]
+    private CinemachineFreeLook cinemachineFreeLook;
 
     private CharacterController characterController;
     private float ySpeed;
@@ -31,14 +38,21 @@ public class playerMovement : MonoBehaviour
         float verticalInput = Input.GetAxis("Vertical");
 
         // get movement direction in vector and calculate magnitude to transform the charactor
-        Vector3 movementDirection = new Vector3(horizontalInput,0, verticalInput);
-        float magnitude = movementDirection.magnitude;
-        magnitude = Mathf.Clamp01((float)magnitude);
+        Vector3 movementDirection = new Vector3(horizontalInput, 0, verticalInput);
+        float inputMagnitude = Mathf.Clamp01(movementDirection.magnitude);
+        
+
+       
+       
+        //animator.SetFloat("Input Magnitude", inputMagnitude);
+        float speed = inputMagnitude * maxSpeed;
+        movementDirection = Quaternion.AngleAxis(cameraTransform.rotation.eulerAngles.y, Vector3.up) * movementDirection    ;
         movementDirection.Normalize();
-        Vector3 velocity = movementDirection * magnitude;
+
+        Vector3 velocity = movementDirection * speed;
         velocity.y = ySpeed;
         characterController.Move(velocity * Time.deltaTime);
-        //transform.Translate(movementDirection * magnitude * Time.deltaTime * speed, Space.World);
+        
 
         //jump Character
         ySpeed += Physics.gravity.y * Time.deltaTime;
@@ -66,17 +80,37 @@ public class playerMovement : MonoBehaviour
         {
             characterController.stepOffset = 0f;
         }
-        
-        // move charactor face to the transform direction
-        if(movementDirection != Vector3.zero)
+
+        if (Input.GetMouseButton(0))
         {
-            animator.SetBool("isMoving", true);
-            Quaternion toRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, Time.deltaTime * rotationSpeed);
+            cinemachineFreeLook.m_XAxis.m_MaxSpeed = 50;
         }
         else
         {
-            animator.SetBool("isMoving", false);
+            cinemachineFreeLook.m_XAxis.m_MaxSpeed = 0;
+        }
+        // move charactor face to the transform direction
+        if(movementDirection != Vector3.zero)
+        {
+            
+            Quaternion toRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, Time.deltaTime * rotationSpeed);
+            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+            {
+                animator.SetBool("isRunning", true);
+                animator.SetBool("isWalking", true);
+            }
+            else
+            {
+                animator.SetBool("isWalking", true);
+                animator.SetBool("isRunning", false);
+            }
+            
+        }
+        else
+        {
+            animator.SetBool("isWalking", false);
+            animator.SetBool("isRunning", false);
         }
     }
 }
