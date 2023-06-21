@@ -14,11 +14,13 @@ public class playerMovement : MonoBehaviour
     private float orignalStepOffset;
     private float? lastGroundTime;
     private float? jumpButtonPressedTime;
+    private Animator animator;
 
 
     private void Start()
     {
         characterController = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
         orignalStepOffset = characterController.stepOffset;
     }
 
@@ -68,8 +70,13 @@ public class playerMovement : MonoBehaviour
         // move charactor face to the transform direction
         if(movementDirection != Vector3.zero)
         {
+            animator.SetBool("isMoving", true);
             Quaternion toRotation = Quaternion.LookRotation(movementDirection, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, toRotation, Time.deltaTime * rotationSpeed);
+        }
+        else
+        {
+            animator.SetBool("isMoving", false);
         }
     }
 }
